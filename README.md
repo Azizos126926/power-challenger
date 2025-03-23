@@ -30,13 +30,6 @@ Hyperparameter Tuning – Optimizing for best RMSE performance.
 
 Submission & Evaluation – Generating predictions for Zindi submission.
 
-🔧 Setup
-To run the project locally:
-
-bash:
-git clone https://github.com/yourusername/micro-hydro-forecasting.git
-cd micro-hydro-forecasting
-pip install -r requirements.txt
 📌 Status
 ✅ Ongoing – Experimenting with different models and feature selection techniques.
 
