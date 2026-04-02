@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "power-challenger"
+version = "0.1.0"
+description = "Gold Medal / Top 5 hydropower load forecasting project refactored from notebooks."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Aziz Karaborni & Ahmed Soumer" }
+]
+dependencies = [
+  "numpy>=1.26",
+  "pandas>=2.1",
+  "pyyaml>=6.0",
+  "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+classic = [
+  "catboost>=1.2",
+  "scikit-learn>=1.4",
+  "statsmodels>=0.14",
+]
+deep = [
+  "tensorflow>=2.15",
+]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.6",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

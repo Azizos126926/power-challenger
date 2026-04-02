@@ -1,0 +1,70 @@
+project:
+  name: power-challenger
+  title: IBM SkillsBuild Hydropower Climate Optimisation Challenge
+
+data:
+  train_csv: data/reference/aggday.csv
+  climate_xlsx: data/external/Kalam Climate Data.xlsx
+  sample_submission_csv: data/external/SampleSubmission.csv
+  source_voltage_csv: data/reference/source_to_voltage.csv
+  source_type_voltage_csv: data/reference/source_to_type_voltage.csv
+
+training:
+  excluded_devices: [18]
+  cutoff_date_for_high_sources: 2024-08-24
+  high_kwh_sources:
+    - consumer_device_10_data_user_10
+    - consumer_device_10_data_user_6
+    - consumer_device_10_data_user_9
+    - consumer_device_12_data_user_5
+    - consumer_device_12_data_user_6
+    - consumer_device_13_data_user_10
+    - consumer_device_13_data_user_11
+    - consumer_device_13_data_user_12
+    - consumer_device_13_data_user_13
+    - consumer_device_13_data_user_4
+    - consumer_device_13_data_user_5
+    - consumer_device_13_data_user_6
+    - consumer_device_13_data_user_7
+    - consumer_device_13_data_user_8
+    - consumer_device_13_data_user_9
+    - consumer_device_18_data_user_10
+    - consumer_device_18_data_user_11
+    - consumer_device_18_data_user_12
+    - consumer_device_18_data_user_4
+    - consumer_device_18_data_user_5
+    - consumer_device_18_data_user_6
+    - consumer_device_18_data_user_7
+    - consumer_device_18_data_user_8
+    - consumer_device_18_data_user_9
+    - consumer_device_21_data_user_10
+    - consumer_device_21_data_user_3
+    - consumer_device_21_data_user_5
+    - consumer_device_23_data_user_2
+    - consumer_device_23_data_user_4
+    - consumer_device_28_data_user_10
+    - consumer_device_28_data_user_16
+    - consumer_device_28_data_user_2
+    - consumer_device_28_data_user_5
+    - consumer_device_28_data_user_9
+    - consumer_device_29_data_user_3
+    - consumer_device_2_data_user_1
+    - consumer_device_30_data_user_4
+    - consumer_device_32_data_user_19
+    - consumer_device_32_data_user_5
+    - consumer_device_37_data_user_8
+
+model:
+  catboost:
+    iterations: 12000
+    early_stopping_rounds: 100
+    random_state: 42
+    verbose: 500
+
+inference:
+  forecast_horizon: 30
+  device18_peak_ratio: 1.10
+  device18_final_ratio: 0.13
+  scaling_rules:
+    13: 0.92
+    21: 0.90

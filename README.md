@@ -1,65 +1,143 @@
-# 🏆 IBM SkillsBuild Hydropower Climate Optimisation Challenge  
-# TEAM: Aziz Karaborni & Ahmed Soumer
-**🥇 Result: Gold Medal — Top 5 Finalist on Zindi**
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/93afeaba-7d93-48d8-be4e-6ef45f5be31c" alt="mugiwara-IBM SkillsBuild Hydropower Climate Optimisation Challenge" width="300"/>
-</p>
+# IBM SkillsBuild Hydropower Climate Optimisation Challenge
 
-## ⚡ Micro-Hydropower Load Forecasting  
-🌍 **Zindi Competition**: Forecasting Climate & Operational Effects on Load Generation
+> **🥇 Gold Medal solution · Top 5 finalist on Zindi**  
+> A modular forecasting project for micro-hydropower load prediction, rebuilt from the original research notebooks into a cleaner, senior-ML-engineer-style repository.
 
-This repository contains my solution to the **IBM SkillsBuild Hydropower Climate Optimisation Challenge** hosted on Zindi.  
-The objective is to develop a machine learning model that predicts **energy load generation (kWh)** for micro-hydropower plants (MHPs) in off-grid communities.
+## Highlights
 
----
+- **Competition result:** Gold Medal and **Top 5** finish
+- **Problem:** forecast daily `kwh` generation for micro-hydropower plants in the Kalam region of Pakistan
+- **Core winning recipe:** CatBoost for the main leaderboard submission, a targeted device-18 heuristic, and light post-processing for systematic device-level bias
+- **Repository upgrade:** packaged source code, reproducible config, CLI entrypoints, tests, docs, and archived notebooks
 
-## 📌 Problem Statement
+## Repository layout
 
-In the remote **Kalam region of Pakistan**, micro-hydropower plants are essential for local energy supply. However, **fluctuating water flow**, **climate variation**, and **maintenance schedules** create challenges in forecasting load.
+```text
+power-challenger/
+├── artifacts/                  # trained models and submissions
+├── configs/                    # YAML experiment configuration
+├── data/
+│   ├── external/               # competition files you add locally
+│   └── reference/              # shipped metadata + aggregated training sample
+├── docs/                       # competition summary and engineering notes
+├── notebooks/archive/          # original exploration notebooks
+├── scripts/                    # convenience shell entrypoints
+├── src/power_challenger/       # production-style Python package
+└── tests/                      # lightweight regression tests
+```
 
-This project uses both **MHP operational data** (e.g., voltage, current, power factor) and **climate data** (e.g., temperature, precipitation, wind speed) to enhance energy forecasting and ensure system reliability.
+## Competition framing
 
----
+Micro-hydropower plants are a critical off-grid energy source, but output changes quickly with climate, seasonality, and plant-specific operating patterns. The competition task was to forecast the next 30 days of energy load generation using a mix of operational data and climate measurements.
 
-## 📊 Dataset
+This refactor keeps the original competition intuition while presenting it like a maintainable ML project rather than a loose collection of notebooks.
 
-🔗 [Competition Data on Zindi](https://zindi.africa/competitions/ibm-skillsbuild-hydropower-climate-optimisation-challenge/data)
+## Final solution at a glance
 
-- **Operational Metrics**: Voltage, current, power factor, energy readings...
-- **Climate Data**: Temperature, dew point, precipitation, wind speed, snowfall...
+### 1. Daily training frame
+- aggregate and clean the plant-level `kwh` history
+- parse `Source -> consumer_device / data_user`
+- merge source metadata (`voltage`, source type)
+- merge daily climate aggregates when the climate workbook is available
+- add cyclical calendar features
 
----
+### 2. Main supervised model
+- **CatBoostRegressor** trained on all devices except `consumer_device_18`
+- targeted trimming of early history for high-variance / high-kWh sources
+- strong tabular baseline that handles nonlinear interactions well
 
-## 🧪 Evaluation Metric
+### 3. Device-specific exception handling
+- `consumer_device_18` showed a rising-then-declining pattern that general models handled poorly
+- the final leaderboard submission replaced those predictions with a custom **peak-then-decline heuristic**
+- additional post-processing scaled devices `13` and `21` to correct systematic bias
 
-📏 **Root Mean Squared Error (RMSE)** was used to evaluate submissions on the leaderboard.
+### 4. Submission generation
+- load the official sample submission
+- build inference features for every `(date, consumer_device, data_user)` row
+- predict with CatBoost where appropriate
+- overwrite device-18 rows with the heuristic forecast
+- align to the sample submission and export the final CSV
 
----
+## Quick start
 
-## 🚀 Approach
+### 1) Create the environment
 
-- **Data Preprocessing** – Handled missing values, created features, normalized input data.
-- **Exploratory Data Analysis (EDA)** – Analyzed seasonal patterns, correlations, and anomalies.
-- **Modeling** – Built and compared multiple ML models:
-  - ARIMA/SARIMA/Prophet
-  - Gradient Boosting (Catboost, XGboost...)
-  - LSTM/RNN/GRU
-- **Hyperparameter Tuning** – Grid search and cross-validation for optimal RMSE.
-- **Submission & Evaluation** – Generated predictions for Zindi's submission format.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[classic,dev]"
+```
 
----
+### 2) Add the private competition files
 
-## 📌 Project Status
+Place these in `data/external/`:
 
-✅ **Completed** – Finalized models and submitted results  
-🔍 **Exploration Ongoing** – Further experimenting with time series ensembles and postprocessing adjustments
+```text
+data/external/Kalam Climate Data.xlsx
+data/external/SampleSubmission.csv
+```
 
----
+### 3) Train the main model
 
-## 🙏 Acknowledgment
+```bash
+python -m power_challenger.cli train   --config configs/default.yaml   --output artifacts/models/catboost_pipeline.pkl
+```
 
-This competition was hosted by **Zindi** and sponsored by **IBM SkillsBuild**.  
-Data was provided by **CISNR (Center for Intelligent Systems and Networks Research, UET Peshawar).**
+### 4) Generate the final submission
 
----
+```bash
+python -m power_challenger.cli predict   --config configs/default.yaml   --model-path artifacts/models/catboost_pipeline.pkl   --output artifacts/submissions/gold_submission.csv
+```
 
+### 5) Run a simple holdout validation
+
+```bash
+python -m power_challenger.cli validate   --config configs/default.yaml   --split-date 2024-09-13
+```
+
+## Why this version reads better
+
+The original repo captured a lot of strong competitive work, but it spread the logic across many notebooks. This version makes the winning path obvious:
+
+- **`src/power_challenger/pipelines/training.py`** builds the leaderboard training frame
+- **`src/power_challenger/pipelines/predict.py`** assembles the final submission
+- **`src/power_challenger/models/heuristics.py`** contains the device-18 override and post-processing logic
+- **`notebooks/archive/`** preserves the original exploration for transparency
+
+## Archived experimentation
+
+The notebook archive includes:
+- CatBoost / boosting experiments
+- ARIMA and SARIMA baselines
+- GRU and LSTM forecasting experiments
+- feature engineering playgrounds
+- clustering / source profiling analysis
+
+These are intentionally preserved as research history, while the package exposes the cleaner production path.
+
+## Results
+
+| Achievement | Summary |
+|---|---|
+| Public recognition | **Gold Medal** |
+| Final placement | **Top 5 finalist** |
+| Delivery style | notebook-to-project refactor with reproducible structure |
+
+## Engineering notes
+
+- Optional dependencies are imported lazily so the repository remains readable even without every heavyweight package installed.
+- The shipped `aggday.csv` and source metadata tables allow the structure to be inspected immediately.
+- Competition-only files remain external to keep the repository portable and Git-friendly.
+
+## Bibliography
+
+1. Dorogush, A. V., Ershov, V., & Gulin, A. (2018). *CatBoost: gradient boosting with categorical features support*. NeurIPS ML Systems Workshop.
+2. Hyndman, R. J., & Athanasopoulos, G. (2021). *Forecasting: Principles and Practice* (3rd ed.). OTexts.
+3. Hochreiter, S., & Schmidhuber, J. (1997). *Long Short-Term Memory*. Neural Computation, 9(8), 1735–1780.
+4. Cho, K. et al. (2014). *Learning Phrase Representations using RNN Encoder-Decoder for Statistical Machine Translation*. EMNLP.
+5. Zindi. *IBM SkillsBuild Hydropower Climate Optimisation Challenge*. Competition page and dataset documentation.
+
+## Acknowledgment
+
+Hosted by **Zindi** and sponsored by **IBM SkillsBuild**.  
+Data attribution in the original notebook credits **CISNR (Center for Intelligent Systems and Networks Research, UET Peshawar)**.
